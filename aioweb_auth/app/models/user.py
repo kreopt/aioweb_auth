@@ -2,8 +2,8 @@ from orator.orm import has_many, belongs_to_many
 
 from aioweb.core.model import Model, mutator, accessor
 from passlib.handlers.sha2_crypt import sha256_crypt
-from aioweb.contrib.auth.models import permission
-from aioweb.contrib.auth.models import group
+from ..models import permission
+from ..models import group
 
 
 class AbstractUser(object):

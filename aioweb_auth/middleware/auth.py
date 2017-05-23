@@ -2,8 +2,8 @@ from aiohttp import web
 from aiohttp.log import web_logger
 from aiohttp_security import setup as setup_security, authorized_userid, SessionIdentityPolicy, forget, remember
 
-from aioweb.contrib.auth import DBAuthorizationPolicy, USER_MODEL, get_user_by_id, REQUEST_KEY
-from aioweb.contrib.auth.models.user import AbstractUser
+from .. import DBAuthorizationPolicy, USER_MODEL, get_user_by_id, REQUEST_KEY
+from ..app.models.user import AbstractUser
 from aioweb.modules.db import init_db
 from aioweb.util import awaitable
 

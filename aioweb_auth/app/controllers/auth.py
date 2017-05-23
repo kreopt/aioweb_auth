@@ -2,8 +2,8 @@ import re
 from aiohttp import web
 
 import aioweb.core
-from aioweb.contrib.auth import authenticate, AuthError, forget_user, redirect_authenticated
-from aioweb.contrib.auth.helpers.validators import sub_email_or_phone
+from aioweb_auth import authenticate, AuthError, forget_user, redirect_authenticated
+from aioweb_auth.util.validators import sub_email_or_phone
 from aioweb.core.controller.decorators import default_layout
 from aioweb.conf import settings
 from aioweb.util import import_controller, awaitable

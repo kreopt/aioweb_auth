@@ -1,8 +1,8 @@
 from orator.orm import belongs_to_many
 
 from aioweb.core.model import Model
-from aioweb.contrib.auth.models import permission
-from aioweb.contrib.auth.models import user
+from ..models import permission
+from ..models import user
 
 
 class Group(Model):

@@ -6,7 +6,7 @@ from aiohttp_security.abc import AbstractAuthorizationPolicy
 from orator.exceptions.orm import ModelNotFound
 from passlib.hash import sha256_crypt
 
-from aioweb.contrib.auth.models.user import User, AbstractUser
+from .app.models.user import User, AbstractUser
 
 try:
     from aioweb.conf import settings
