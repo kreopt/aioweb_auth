@@ -104,6 +104,7 @@ async def remember_user(request):
 async def forget_user(request):
     check_request_key(request)
     request[REQUEST_KEY]['forget'] = True
+    request['just_logged_out'] = True
 
 
 async def redirect_authenticated(request):
