@@ -24,13 +24,13 @@ REQUEST_KEY = 'AIOWEB_AUTH'
 
 def get_user_by_name(login):
     try:
-        return USER_MODEL.where_raw('email=? or phone=?', [login, login]).first_or_fail()
+        return USER_MODEL.where_raw('email=%s or phone=%s', [login, login]).first_or_fail()
     except ModelNotFound:
         return None
 
 
 def get_user_by_id(id):
-    return USER_MODEL.where_raw('id=?', [id]).first_or_fail()
+    return USER_MODEL.where_raw('id=%s', [id]).first_or_fail()
 
 
 class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
