@@ -17,4 +17,4 @@ class CreateGroupPermissionTable(Migration):
         """
         Revert the migrations.
         """
-        self.schema.drop('user_permissions')
+        self.schema.drop('group_permissions')
