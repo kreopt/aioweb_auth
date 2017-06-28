@@ -1,7 +1,8 @@
-import re
 from aiohttp import web
 
 import aioweb.core
+from aioweb.middleware.csrf.decorators import csrf_exempt
+
 from aioweb_auth import authenticate, AuthError, forget_user, redirect_authenticated
 from aioweb_auth.util.validators import sub_email_or_phone
 from aioweb.core.controller.decorators import default_layout
@@ -19,6 +20,7 @@ class AuthController(aioweb.core.Controller):
             hdlr = getattr(ctrl_class, action)
             return await awaitable(hdlr(self))
 
+    @csrf_exempt
     async def login(self):
         data = await self.request.post()
         try:
@@ -32,9 +34,15 @@ class AuthController(aioweb.core.Controller):
                 self.flash['AUTH_ERROR'] = str(e)
                 raise web.HTTPFound(self.path_for('index'))
 
-        await redirect_authenticated(self.request)
+        if not self.request.is_ajax():
+            await redirect_authenticated(self.request)
+        else:
+            return {'id': self.request.user.id, 'token': self.request.csrf_token}
         raise web.HTTPForbidden(reason='Unauthenticated')  # This should not happen
 
     async def logout(self):
         await forget_user(self.request)
-        raise web.HTTPFound(getattr(settings, 'AUTH_GUEST_URL', '/'))
+        if not self.request.is_ajax():
+            raise web.HTTPFound(getattr(settings, 'AUTH_GUEST_URL', '/'))
+        else:
+            return {}

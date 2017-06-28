@@ -21,7 +21,7 @@ def authenticated(redirect_to=None, only=tuple(), exclude=()):
 def check_logged(redirect_to=None):
     async def fn(request, controller, actionName):
         if not request.user.is_authenticated():
-            if redirect_to:
+            if not request.is_ajax() and redirect_to:
                 raise web.HTTPFound(redirect_to)
             else:
                 raise web.HTTPForbidden(reason='Unauthorized')
