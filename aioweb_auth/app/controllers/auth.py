@@ -1,13 +1,13 @@
-from aiohttp import web
-
 import aioweb.core
-from aioweb.middleware.csrf.decorators import csrf_exempt
-
-from aioweb_auth import authenticate, AuthError, forget_user, redirect_authenticated
-from aioweb_auth.util.validators import sub_email_or_phone
-from aioweb.core.controller.decorators import default_layout
+from aiohttp import web
 from aioweb.conf import settings
+from aioweb.core.controller.decorators import default_layout
+from aioweb.middleware.csrf.decorators import csrf_exempt
 from aioweb.util import import_controller, awaitable
+
+from aioweb_auth import authenticate, AuthError, forget_user, redirect_authenticated, auth_error_response, \
+    auth_success_response
+from aioweb_auth.util.validators import sub_email_or_phone
 
 
 @default_layout('base.html')
@@ -25,20 +25,14 @@ class AuthController(aioweb.core.Controller):
         data = await self.request.post()
         try:
             username = sub_email_or_phone(data.get('username', ''))
-
-            await authenticate(self.request, username, data.get('password'), remember=True)
-        except AuthError as e:
-            if self.request.is_ajax():
-                raise web.HTTPForbidden(reason=str(e))
+            if username:
+                await authenticate(self.request, username, data.get('password'), remember=True)
             else:
-                self.flash['AUTH_ERROR'] = str(e)
-                raise web.HTTPFound(self.path_for('index'))
+                raise auth_error_response(self, 'Invalid username', detail='Такого пользователя не существует')
+        except AuthError as e:
+            raise auth_error_response(self, str(e))
 
-        if not self.request.is_ajax():
-            await redirect_authenticated(self.request)
-        else:
-            return {'id': self.request.user.id, 'token': self.request.csrf_token}
-        raise web.HTTPForbidden(reason='Unauthenticated')  # This should not happen
+        return await auth_success_response(self)
 
     async def logout(self):
         await forget_user(self.request)
