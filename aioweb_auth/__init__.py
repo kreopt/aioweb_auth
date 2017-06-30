@@ -113,7 +113,6 @@ async def redirect_authenticated(request):
         if not redirect_url:
             redirect_url = getattr(settings, 'AUTH_PRIVATE_URL', '/')
         raise web.HTTPFound(redirect_url)
-    raise web.HTTPForbidden(reason='Unknown error')
 
 
 def auth_error_response(controller, reason, detail=None):

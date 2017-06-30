@@ -19,6 +19,8 @@ class AuthController(aioweb.core.Controller):
             ctrl_class, ctrl_class_name = import_controller(ctrl)
             hdlr = getattr(ctrl_class, action)
             return await awaitable(hdlr(self))
+        else:
+            raise web.HTTPNotFound()
 
     @csrf_exempt
     async def login(self):
