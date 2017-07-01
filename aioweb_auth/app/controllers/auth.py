@@ -1,7 +1,7 @@
 import aioweb.core
 from aiohttp import web
 from aioweb.conf import settings
-from aioweb.core.controller.decorators import default_layout
+from aioweb.core.controller.decorators import default_layout, content_type
 from aioweb.middleware.csrf.decorators import csrf_exempt
 from aioweb.util import import_controller, awaitable
 
@@ -12,6 +12,8 @@ from aioweb_auth.util.validators import sub_email_or_phone
 
 @default_layout('base.html')
 class AuthController(aioweb.core.Controller):
+
+    @content_type(only=['text/html'])
     async def index(self):
         await redirect_authenticated(self.request)
         if hasattr(settings, 'AUTH_INDEX_HANDLER'):

@@ -108,7 +108,7 @@ async def forget_user(request):
 
 
 async def redirect_authenticated(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated() and not request.is_ajax():
         redirect_url = request.query.get('redirect_to')
         if not redirect_url:
             redirect_url = getattr(settings, 'AUTH_PRIVATE_URL', '/')
