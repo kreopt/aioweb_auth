@@ -27,7 +27,10 @@ class User(Model, AbstractUser):
 
     @mutator
     def password(self, value):
-        self.set_raw_attribute('password', User.hash_password(value))
+        if value:
+            self.set_raw_attribute('password', User.hash_password(value))
+        else:
+            self.set_raw_attribute('password', '')
 
     def can(self, permission):
         # TODO: check it
