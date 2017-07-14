@@ -27,6 +27,7 @@ async def process_auth(request, response):
     if request.get(REQUEST_KEY):
         if request[REQUEST_KEY].get('remember') and request.user.is_authenticated():
             await remember(request, response, request.user.username)
+            response.set_cookie('Csrf-Token', request.csrf_token)
         if request[REQUEST_KEY].get('forget'):
             await forget(request, response)
             session = await get_session(request)
