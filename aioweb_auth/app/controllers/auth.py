@@ -39,8 +39,15 @@ class AuthController(aioweb.core.Controller):
         return await auth_success_response(self)
 
     async def logout(self):
+        res = {}
+        if hasattr(settings, 'AUTH_LOGOUT_HANDLER'):
+            ctrl, action = getattr(settings, 'AUTH_LOGOUT_HANDLER').split('#')
+            ctrl_class, ctrl_class_name = import_controller(ctrl)
+            hdlr = getattr(ctrl_class, action)
+            res = await awaitable(hdlr(self))
+
         await forget_user(self.request)
         if not self.request.is_ajax():
             raise web.HTTPFound(getattr(settings, 'AUTH_GUEST_URL', '/'))
         else:
-            return {}
+            return res
