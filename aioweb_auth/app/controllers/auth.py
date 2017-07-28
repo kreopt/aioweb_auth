@@ -36,6 +36,14 @@ class AuthController(aioweb.core.Controller):
         except AuthError as e:
             raise auth_error_response(self, str(e))
 
+        if hasattr(settings, 'AUTH_LOGIN_HANDLER'):
+            ctrl, action = getattr(settings, 'AUTH_LOGIN_HANDLER').split('#')
+            ctrl_class, ctrl_class_name = import_controller(ctrl)
+            hdlr = getattr(ctrl_class, action)
+            res=  await awaitable(hdlr(self))
+            if res:
+                return res
+
         return await auth_success_response(self)
 
     async def logout(self):
