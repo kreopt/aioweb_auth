@@ -23,6 +23,8 @@ REQUEST_KEY = 'AIOWEB_AUTH'
 
 
 def get_user_by_name(login):
+    if login is None:
+        return None
     try:
         return USER_MODEL.where('email', login).or_where('phone', login).first_or_fail()
     except ModelNotFound:
