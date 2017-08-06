@@ -10,6 +10,9 @@ class AbstractUser(object):
     def is_authenticated(self):
         return False
 
+    def get_id(self):
+        return None
+
 
 class User(Model, AbstractUser):
     __guarded__ = ['id']
@@ -19,6 +22,9 @@ class User(Model, AbstractUser):
         if 'password' in attributes:
             attributes['password'] = User.hash_password(attributes['password'])
         super().__init__(_attributes, **attributes)
+
+    def get_id(self):
+        return self.id
 
     @staticmethod
     def hash_password(value):
