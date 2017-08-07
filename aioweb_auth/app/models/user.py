@@ -17,6 +17,9 @@ class AbstractUser(object):
 
 class User(OratorModel, AbstractUser):
 
+    __guarded__ = ['id']
+    __hidden__ = ['password']
+
     def __init__(self, _attributes=None, **attributes):
         if 'password' in attributes:
             attributes['password'] = User.hash_password(attributes['password'])
