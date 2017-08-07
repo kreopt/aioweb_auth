@@ -1,12 +1,13 @@
 from orator.orm import has_many, belongs_to_many
 
-from aioweb.core.model import Model, mutator, accessor
+from aioweb.core.model import OratorModel, mutator, accessor
 from passlib.handlers.sha2_crypt import sha256_crypt
 from ..models import permission
 from ..models import group
 
 
 class AbstractUser(object):
+
     def is_authenticated(self):
         return False
 
@@ -14,9 +15,7 @@ class AbstractUser(object):
         return None
 
 
-class User(Model, AbstractUser):
-    __guarded__ = ['id']
-    __hidden__ = ['password']
+class User(OratorModel, AbstractUser):
 
     def __init__(self, _attributes=None, **attributes):
         if 'password' in attributes:
