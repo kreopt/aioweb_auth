@@ -14,7 +14,7 @@ async def make_request_user(request):
     identity = await authorized_userid(request)
     if identity:
         try:
-            user = get_user_by_id(identity)
+            user = await get_user_by_id(identity)
             setattr(user, 'is_authenticated', lambda: True)
             setattr(request, 'user', user)
         except USER_MODEL.ModelNotFound:
@@ -26,7 +26,7 @@ async def make_request_user(request):
 async def process_auth(request, response):
     if request.get(REQUEST_KEY):
         if request[REQUEST_KEY].get('remember') and request.user.is_authenticated():
-            await remember(request, response, request.user.username)
+            await remember(request, response, request.user.username())
             # response.set_cookie('Csrf-Token', request.csrf_token)
         if request[REQUEST_KEY].get('forget'):
             await forget(request, response)

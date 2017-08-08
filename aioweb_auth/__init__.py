@@ -3,6 +3,7 @@ import importlib
 from aiohttp import web
 from aiohttp.log import web_logger
 from aiohttp_security.abc import AbstractAuthorizationPolicy
+from aioweb.util import awaitable
 from orator.exceptions.orm import ModelNotFound
 from passlib.hash import sha256_crypt
 
@@ -22,24 +23,26 @@ except (ImportError, AttributeError) as e:
 REQUEST_KEY = 'AIOWEB_AUTH'
 
 
-def get_user_by_name(login):
+async def get_user_by_name(login, force_db=False):
     if login is None:
-        return None
+        return AbstractUser()
     try:
-        return USER_MODEL.where('email', login).or_where('phone', login).first_or_fail()
+        # return USER_MODEL.where('email', login).or_where('phone', login).first_or_fail()
+        return await awaitable(USER_MODEL().get_by_username(login, force_db=force_db))
     except ModelNotFound:
-        return None
+        return AbstractUser()
 
 
-def get_user_by_id(id):
-    return USER_MODEL.where('id', id).first_or_fail()
+async def get_user_by_id(user_id, force_db=False):
+    # return USER_MODEL.where('id', id).first_or_fail()
+    return await awaitable(USER_MODEL().get_by_id(user_id, force_db=force_db))
 
 
 class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def authorized_userid(self, identity):
         # TODO: check cache
-        user = get_user_by_name(identity)
-        if user:
+        user = await get_user_by_name(identity)
+        if user.is_authenticated():
             return user.id
         else:
             return None
@@ -81,8 +84,8 @@ async def authenticate_user(request, user, remember=False, validators=tuple()):
 
 
 async def authenticate(request, username, password, remember=False, validators=tuple()):
-    user = get_user_by_name(username)
-    if user:
+    user = await get_user_by_name(username, force_db=True)
+    if user.is_authenticated():
         if sha256_crypt.verify(password, user.password):
             return await authenticate_user(request, user, remember=remember, validators=validators)
         else:

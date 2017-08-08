@@ -1,6 +1,6 @@
 from orator.orm import has_many, belongs_to_many
 
-from aioweb.core.model import OratorModel, mutator, accessor
+from aioweb.core.model import OratorModel, mutator, accessor, Model
 from passlib.handlers.sha2_crypt import sha256_crypt
 from ..models import permission
 from ..models import group
@@ -15,6 +15,41 @@ class AbstractUser(object):
         return None
 
 
+class AuthenticatedUser(AbstractUser, Model):
+
+    __fields__ = ['password', 'email', 'phone']
+
+    def __init__(self, user_id, **kwargs):
+        self.id = user_id
+
+        for field in self.__fields__:
+            setattr(self, field, None)
+
+        for arg, val in kwargs.items():
+            if arg in self.__fields__:
+                # if arg == 'password':
+                #     setattr(self, arg, AuthenticatedUser.hash_password(val))
+                #     continue
+                setattr(self, arg, val)
+
+    @staticmethod
+    def hash_password(value):
+        # TODO: configurable hash type
+        return sha256_crypt.hash(value)
+
+    def username(self):
+        return self.phone if self.phone else self.email
+
+    def __str__(self):
+        return self.username
+
+    def is_authenticated(self):
+        return True
+
+    def get_id(self):
+        return self.id
+
+
 class User(OratorModel, AbstractUser):
 
     __guarded__ = ['id']
@@ -24,6 +59,12 @@ class User(OratorModel, AbstractUser):
         if 'password' in attributes:
             attributes['password'] = User.hash_password(attributes['password'])
         super().__init__(_attributes, **attributes)
+
+    async def get_by_username(self, username):
+        return self.where('email', username).or_where('phone', username).first_or_fail()
+
+    async def get_by_id(self, id):
+        return self.where('id', id).first_or_fail()
 
     def get_id(self):
         return self.id
