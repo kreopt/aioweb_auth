@@ -90,10 +90,10 @@ async def authenticate(request, username, password, remember=False, validators=t
             return await authenticate_user(request, user, remember=remember, validators=validators)
         else:
             setattr(request, 'user', AbstractUser())
-            raise AuthError("Password does not match")
+            raise AuthError("Некорректный пароль")
     else:
         setattr(request, 'user', AbstractUser())
-        raise AuthError("User not found")
+        raise AuthError("Пользователь не найден")
 
 
 def check_request_key(request):
