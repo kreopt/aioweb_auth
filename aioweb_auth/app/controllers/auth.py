@@ -32,7 +32,7 @@ class AuthController(aioweb.core.Controller):
             if username:
                 await authenticate(self.request, username, data.get('password', ''), remember=True)
             else:
-                raise auth_error_response(self, 'Invalid username', detail='Такого пользователя не существует')
+                raise auth_error_response(self, 'Такого пользователя не существует', detail='Такого пользователя не существует')
         except AuthError as e:
             raise auth_error_response(self, str(e))
 
