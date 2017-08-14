@@ -57,7 +57,10 @@ class User(OratorModel, AbstractUser):
 
     def __init__(self, _attributes=None, **attributes):
         if 'password' in attributes:
-            attributes['password'] = User.hash_password(attributes['password'])
+            if attributes['password']:
+                attributes['password'] = User.hash_password(attributes['password'])
+            else:
+                attributes['password'] = None
         super().__init__(_attributes, **attributes)
 
     async def get_by_username(self, username):
@@ -79,7 +82,7 @@ class User(OratorModel, AbstractUser):
         if value:
             self.set_raw_attribute('password', User.hash_password(value))
         else:
-            self.set_raw_attribute('password', '')
+            self.set_raw_attribute('password', None)
 
     def can(self, permission):
         # TODO: check it
