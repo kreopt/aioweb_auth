@@ -3,22 +3,21 @@ import importlib
 from aiohttp import web
 from aiohttp.log import web_logger
 from aiohttp_security.abc import AbstractAuthorizationPolicy
+from aiohttp_session import get_session
+from aioweb.core import Model
 from aioweb.util import awaitable
 from orator.exceptions.orm import ModelNotFound
 from passlib.hash import sha256_crypt
 
-from .app.models.user import User, AbstractUser
+from aioweb_auth.exceptions import UserNotFoundError, PasswordDoesNotMatchError
+from .app.models.user import AbstractUser
 
-try:
-    from aioweb.conf import settings
+from aioweb.conf import settings
 
-    chunks = settings.AUTH_USER_MODEL.split('.')
+chunks = settings.AUTH_USER_MODEL.split('.')
 
-    mod = importlib.import_module('.'.join(chunks[:-1]))
-    USER_MODEL = getattr(mod, chunks[-1])
-except (ImportError, AttributeError) as e:
-    web_logger.debug("failed to import user model")
-    USER_MODEL = User
+mod = importlib.import_module('.'.join(chunks[:-1]))
+USER_MODEL = getattr(mod, chunks[-1])
 
 REQUEST_KEY = 'AIOWEB_AUTH'
 
@@ -50,50 +49,44 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def permits(self, identity, permission, context=None):
         if identity is None:
             return False
-        return USER_MODEL.can(permission)
+        return await USER_MODEL().can(permission)
 
 
-class AuthError(Exception):
-    def __init__(self, reason, *args) -> None:
-        super().__init__(reason, *args)
-        self.reason = reason
+class AbstractUser(object):
 
-    def __str__(self):
-        return self.reason
+    @property
+    def id(self):
+        return None
 
-
-class AuthValidator(object):
-    def __init__(self):
-        self.reason = "check failed"
-
-    def validate(self, user):
+    def is_authenticated(self):
         return False
 
+class BaseUserFactory(Model):
+    async def authenticate(self, user, **kwargs):
+        raise AuthError()
 
-async def authenticate_user(request, user, remember=False, validators=tuple()):
-    for validator in validators:
-        if not validator.validate(user):
-            raise AuthError(validator.reason)
-    setattr(user, 'is_authenticated', lambda: True)
-    request['just_authenticated'] = True
-    setattr(request, 'user', user)
-    if remember:
-        await remember_user(request)
+    async def get_by_id(self, user_id):
+        return None
 
-    return user
+    async def get_by_name(self, username):
+        return None
 
-
-async def authenticate(request, username, password, remember=False, validators=tuple()):
-    user = await get_user_by_name(username, force_db=True)
-    if user.is_authenticated():
-        if sha256_crypt.verify(password, user.password):
-            return await authenticate_user(request, user, remember=remember, validators=validators)
-        else:
-            setattr(request, 'user', AbstractUser())
-            raise AuthError("Некорректный пароль")
+async def get_session_user(request):
+    session = await get_session(request)
+    user_id = session.get('user_id')
+    if user_id:
+        return await UserFactory().get_by_id(user_id)
     else:
-        setattr(request, 'user', AbstractUser())
-        raise AuthError("Пользователь не найден")
+        return AbstractUser()
+
+
+def wrap_authenticated_user(user):
+    if type(user) != AbstractUser:
+        setattr(user, 'is_authenticated', lambda: True)
+
+
+def attach_user_to_request(request, user):
+    setattr(request, 'user', wrap_authenticated_user(user))
 
 
 def check_request_key(request):
@@ -110,26 +103,3 @@ async def forget_user(request):
     check_request_key(request)
     request[REQUEST_KEY]['forget'] = True
     request['just_logged_out'] = True
-
-
-async def redirect_authenticated(request):
-    if request.user.is_authenticated() and not request.is_ajax():
-        redirect_url = request.query.get('redirect_to')
-        if not redirect_url:
-            redirect_url = getattr(settings, 'AUTH_PRIVATE_URL', '/')
-        raise web.HTTPFound(redirect_url)
-
-
-def auth_error_response(controller, reason, detail=None):
-    if controller.request.is_ajax():
-        return web.HTTPForbidden(reason=reason)
-    else:
-        controller.flash['AUTH_ERROR'] = detail if detail else reason
-        return web.HTTPFound(controller.path_for('index'))
-
-
-async def auth_success_response(controller):
-    if not controller.request.is_ajax():
-        await redirect_authenticated(controller.request)
-    else:
-        return {'id': controller.request.user.id, 'token': controller.request.csrf_token}
