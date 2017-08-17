@@ -14,6 +14,9 @@ class AbstractUser(object):
     def get_id(self):
         return None
 
+    def __getattr__(self, item):
+        return None
+
 
 class AuthenticatedUser(AbstractUser, Model):
 
