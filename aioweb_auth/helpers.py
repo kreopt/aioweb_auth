@@ -1,8 +1,11 @@
 from aiohttp import web
+from aiohttp_security import authorized_userid
 from aioweb.conf import settings
 
+
 async def redirect_authenticated(request):
-    if request.user.is_authenticated() and not request.is_ajax():
+    user_id = await authorized_userid(request)
+    if user_id and not request.is_ajax():
         redirect_url = request.query.get('redirect_to')
         if not redirect_url:
             redirect_url = getattr(settings, 'AUTH_PRIVATE_URL', '/')
@@ -21,4 +24,5 @@ async def auth_success_response(controller):
     if not controller.request.is_ajax():
         await redirect_authenticated(controller.request)
     else:
-        return {'id': controller.request.user.id, 'token': controller.request.csrf_token}
+        user_id = await authorized_userid(controller.request)
+        return {'id': user_id, 'token': controller.request.csrf_token}

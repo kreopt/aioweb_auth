@@ -1,11 +1,13 @@
 from aiohttp import web
+from aiohttp_security import authorized_userid
 
 from aioweb.core.controller.decorators import before_action
 
 
 def auth_or_403(redirect_to):
-    def decorated(self):
-        if not self.request.user.is_authenticated():
+    async def decorated(self):
+        user_id = await authorized_userid(self.request)
+        if not user_id:
             if redirect_to:
                 raise web.HTTPFound(redirect_to)
             else:
@@ -20,7 +22,8 @@ def authenticated(redirect_to=None, only=tuple(), exclude=()):
 
 def check_logged(redirect_to=None):
     async def fn(request, controller, actionName):
-        if not request.user.is_authenticated():
+        user_id = await authorized_userid(request)
+        if not user_id:
             if not request.is_ajax() and redirect_to:
                 raise web.HTTPFound(redirect_to)
             else:

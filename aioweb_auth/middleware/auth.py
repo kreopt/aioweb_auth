@@ -1,15 +1,15 @@
 from aiohttp import web
-from aiohttp.log import web_logger
-from aiohttp_security import setup as setup_security, authorized_userid, SessionIdentityPolicy, forget, remember
+from aiohttp_security import setup as setup_security, forget, remember
 
 from .. import REQUEST_KEY, IDENTITY_POLICY, AUTHORIZATION_POLICY
 from aioweb.util import awaitable
+
 
 async def process_auth(request, response):
     if request.get(REQUEST_KEY):
         identity = request[REQUEST_KEY].get('remember')
         if identity:
-            await remember(request, response, identity)
+            await remember(request, response, str(identity))
         if request[REQUEST_KEY].get('forget'):
             await forget(request, response)
 
